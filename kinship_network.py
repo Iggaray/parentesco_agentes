@@ -1,9 +1,5 @@
-import os
 import random as rd
-import numpy as np
-import math
-import matplotlib.pyplot as plt
-import collections
+import pyvis
 
 
 def load_distr(filename, has_headers=True):
@@ -81,7 +77,7 @@ def binary_search_list(L, x):
     while left<=right:
         middle=(left+right)//2
         if L[middle]==x:
-            pos=medio
+            pos=middle
             break
         
         if L[middle]>x:
@@ -209,7 +205,8 @@ def marriages_F1(p2c, gender):
 def generate_population(M, a, start_zero=True):
     
     '''
-    Creates a population descendant of M couples of parents. 
+    Creates a population descendant of M couples of parents.
+    
     The f(n) function, namely the probability that a couple of parents has 'n' children, is exponential.
     Gender is asigned fully at random to each person (male and female only).
     Marriages are assigned fully random between nodes in population of children if:
@@ -282,3 +279,78 @@ def generate_population(M, a, start_zero=True):
     
 
     return T
+
+class Kinship_net(object):
+    """Clase que representa un grafo
+    
+    Permite instanciar grafos a partir de una lista de tuplas. Se pueden
+    generar representaciones como diccionario de nodos y sus respectivos
+    vecinos. También es posible graficar la red.
+    
+    __init__: constructor que genera la red a partir de M y a
+    generar_dic_vecinos: método que devuelve un diccionario donde cada key es
+    un nodo y tiene una lista de vecinos asociada
+    show: método para graficar la red"""
+    
+    def __init__(self, M, a):
+        """Construir una red de parentesco con parámetros M y a
+        
+        Input
+        -----
+        M: numero de parejas inicial
+        a: parámetro de la probabilidad de n hijos por pareja: f(n)=A*a^(-n)
+        """       
+        #construyo la red
+        self.lista = generate_population(M, a)
+        self.M = M
+        self.a = a
+        
+        #genero un objeto Network con la lista de tuplas de nodos
+        self.nodos = set()
+        for tupla in self.lista:
+            self.nodos.add(tupla[0])
+            self.nodos.add(tupla[1])
+        
+        for i in range(max(self.nodos)): #completo los nodos sin edge
+            self.nodos.add(i)
+            
+        self.net = pyvis.network.Network()
+        for nodo in self.nodos:
+            self.net.add_node(nodo)
+        for edge in self.lista:
+            self.net.add_edge(*edge)
+            
+    def generar_dic_vecinos(self):
+        """Devolver un diccionario de nodos y listas de vecinos asociados
+        """ 
+        grafo = []
+        #completo los pares recíprocos y quito la unidad
+        for tupla in self.lista[:len(self.lista)]:
+            x, y = tupla
+            grafo.append((x - 1, y - 1))
+            grafo.append((y - 1, x - 1))
+        
+        #ordeno el grafo
+        grafo.sort()     
+        #genero el diccionario de vecinos para cada nodo
+        dic_vecinos = {}
+        for tupla in grafo:
+            i, j = tupla
+            if i not in dic_vecinos:
+                dic_vecinos[i] = [j]
+            else:
+                dic_vecinos[i].append(j)
+        
+        for nodo in self.nodos: #los nodos estan referidos a si mismos
+            if nodo not in dic_vecinos:
+                dic_vecinos[nodo] = [nodo]
+            else:
+                dic_vecinos[nodo].append(nodo)
+        
+        self.dic_vecinos = dic_vecinos
+        return dic_vecinos
+    
+    def show(self):
+        """Mostrar la red
+        """
+        self.net.show('my_net.html')

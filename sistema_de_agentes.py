@@ -79,10 +79,29 @@ class Replicadores_parentesco(Sistema):
                     a_i * (\hat x - x_i) +
                     (u_i - x_i)\delta(t - t_ik),
     donde \hat x representa el promedio sobre todos los primeros vecinos de
-    un agente en el grafo de parentescos."""
+    un agente en el grafo de parentescos.
+    
+    Parameters
+        ----------
+        M : int
+            Número de parejas iniciales.
+        n_mean : float
+            Número medio de hijes por pareja.
+        x0 : float
+            Recursos iniciales de cada nodo.
+        q : float
+            tasa de reseteo de cada nodo.
+        lamda : float
+            tasa de crecimiento de cada nodo.
+        u : float
+            valor de reseteo de cada nodo.
+        a : float
+            tasa de coparticipación de recursos a primeros vecinos.
+        dt : float
+            paso temporal de integración.
+    """
     
     def __init__(self, M, n_mean, x0, q, lamda, u, a, dt):
-        #genero la red de parentesco
         self.red = Kinship_net(M, a = 1.0 + 1.0 / n_mean)
         self.vecinos = self.red.generar_dic_vecinos()
         n = max(self.red.nodos) #numero de agentes

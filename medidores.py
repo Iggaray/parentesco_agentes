@@ -11,6 +11,7 @@ from collections import Counter
 
 #medidores.py
 class Estadistico(object):
+    """Estadístico genérico que se alimenta de datos en serie"""
     def __init__(self, valor=0):
         self.valor = valor
         self.paso = 0
@@ -26,6 +27,9 @@ class Estadistico(object):
         pass
 
 class Media(Estadistico):
+    """Media acumulada que se alimenta de datos en serie, de a uno.
+    
+    Recuerda el número de datos que recibió."""
     def __init__(self):
         super().__init__(valor=0)
     
@@ -39,7 +43,8 @@ class Media(Estadistico):
 
 class Desvio_Estandar(Estadistico):
     '''Esta clase funciona trabajando con la varianza primero, y con un getter
-    se obtiene el desvio estandar'''
+    se obtiene el desvio estandar
+    '''
     def __init__(self):
         super().__init__(valor=0)
     
@@ -52,22 +57,42 @@ class Desvio_Estandar(Estadistico):
         return np.sqrt(self.valor - baricentro**2)
     
 class Histograma(object):
-    '''Histograma que usa una función de indexado para actualizar los conteos'''
+    '''Histograma que usa una función de indexado para actualizar los conteos.
+    
+    Atributos:
+    ----------
+    bins : 1-d ndarray
+        Contiene los bordes de los bines
+        
+    Métodos
+    -------
+    index : método abstracto de indexado de bines propio de cada subclase.
+    plot_histo : graficar el histograma usando matplotlib
+    reset: reiniciar a cero los valores de los bines
+    normalizado: devolver los conteos de los bines normalizados
+    densidad: devolver la densidad de probabilidad asociada al historgama
+        (tiene en cuenta el ancho de cada bin)
+    plot_densidad: graficar densidad de probabilidad asociada al histograma'''
+    
     def __init__(self, bins):
         self.bins = bins
-        self.cuentas = np.zeros(len(bins)) #self.cuentas = Counter()
+        self.cuentas = np.zeros(len(bins)) #Counter()
         self.paso = 0
     
     def index(self, x):
-        '''Asignar un índice al valor de entrada x'''
+        '''Asignar un índice al valor de entrada x
+        '''
         pass
     
     def nuevo_dato(self, x):
-        '''Agregar un conteo en el bin correspondiente'''
+        '''Agregar un conteo en el bin correspondiente
+        '''
         self.cuentas[self.index(x)] += 1
         self.paso += 1
     
     def plot_histo(self, xlabel=None, ylabel=None, title=None):
+        '''Graficar histograma
+        '''
         plt.figure()
         plt.plot(self.bins, self.cuentas.values(), linestyle='none', marker='.')
     
@@ -90,6 +115,8 @@ class Histograma(object):
             plt.loglog(x[f>0], f[f>0], linestyle='-', marker='.')
     
 class Histo_Lineal(Histograma):
+    '''Histograma con bineo lineal
+    '''
     def __init__(self, xmin, xmax, nbins):
         bins = np.linspace(xmin, xmax, nbins)
         super().__init__(bins)
@@ -102,6 +129,8 @@ class Histo_Lineal(Histograma):
         return np.clip(index, 0, self.nbins - 1).astype(int)
     
 class Histo_Log(Histograma):
+    '''Histograma con bineo logarítmico
+    '''
     def __init__(self, xmin, xmax, nbins):
         razon = (xmax/xmin)**(1.0/nbins)
         bins = xmin * np.logspace(0, nbins, num=nbins, base=razon)

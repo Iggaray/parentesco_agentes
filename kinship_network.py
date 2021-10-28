@@ -287,11 +287,27 @@ class Kinship_net(object):
     generar representaciones como diccionario de nodos y sus respectivos
     vecinos. También es posible graficar la red.
     
-    __init__: constructor que genera la red a partir de M y a
-    generar_dic_vecinos: método que devuelve un diccionario donde cada key es
-    un nodo y tiene una lista de vecinos asociada
-    show: método para graficar la red"""
+    Parámetros
+    ----------
+    M : número inicial de parejas
+    a : parámetro de la probabilidad de n hijos por pareja: f(n)=A*a^(-n)
     
+    Atributos
+    ---------
+    lista : list
+        lista de tuplas con aristas entre nodos [(n1, n2), ..., (ni, nj)]
+    nodos : set
+        conjunto de nodos de la red
+    net : pyvis.network.Network
+        objeto que representa la red
+    
+    Métodos
+    -------
+    __init__ : constructor que genera la red a partir de M y a
+    generar_dic_vecinos : método que devuelve un diccionario donde cada key es
+        un nodo y tiene una lista de vecinos asociada
+    show : método para graficar la red
+    """
     def __init__(self, M, a):
         """Construir una red de parentesco con parámetros M y a
         
@@ -353,4 +369,7 @@ class Kinship_net(object):
     def show(self):
         """Mostrar la red
         """
+        #pendiente: estaria buenisimo que grafique el tamaño de los nodos en
+        #función del promedio temporal de recursos de cada uno. computar eso 
+        #igual tomaria una banda de tiempo. GPU con cupy?
         self.net.show('my_net.html')

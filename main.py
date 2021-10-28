@@ -6,42 +6,61 @@ Created on Sat Sep 11 14:37:14 2021
 @author: nacho
 """
 
-from medidores import Media, Desvio_Estandar, Histo_Lineal, Histo_Log
-from sistema_de_agentes import Replicadores, Desacoplados
+from sistema_de_agentes import Replicadores_parentesco
 import numpy as np
 from matplotlib import pyplot as plt
-from funciones import f_cont
+from medidores import Media, Desvio_Estandar, Histo_Log
 import os
 
-n = 1000
-def simulacion(n):
-    x0 = np.ones(n)
-    q = 0.1 * np.ones(n)
-    lamda = np.ones(n)
-    u = 0.1 * np.ones(n)# / (10*n)
+def simulacion(M, mean_hijes, q=0.1, lamda=1.0, u_adim=1e-2, a=1.0, dt=1e-3):
+    """Simulación de un sistema de replicadores emparentados.
     
-    replicadores = Replicadores(n, x0/n, q, lamda, u/n, dt=1e-3)
-    replicadores.transitorio(pasos=10000)
+    Devuelve un diccionario con el tamaño del sistema, un histograma de los
+    valores totales de recursos visitados, promedio temporal acumulado y
+    fluctuaciones temporales.
+    """
+    
+    sistema = Replicadores_parentesco(
+        M,
+        mean_hijes,
+        x0 = 1.0 / M / mean_hijes,
+        q = q,
+        lamda = lamda,
+        u = u_adim,
+        a = a, 
+        dt = dt
+        )
+    sistema.transitorio(pasos=10000)
     
     bar_x_t = Media()
     sigma_bar_x_t = Desvio_Estandar()
-    histo = Histo_Log(xmin = (u/n).min(), xmax = 1.0/n, nbins = 100)
+    histo = Histo_Log(
+        xmin = u_adim / sistema.n,
+        xmax = 1.0 / sistema.n,
+        nbins = 100
+        )
     pasos = 10 ** 6
     
     for i in range(pasos):
-        replicadores.step()
-        mu = replicadores.mean()
+        sistema.step()
+        mu = sistema.mean()
         bar_x_t.nuevo_dato(mu)
         sigma_bar_x_t.nuevo_dato(mu)
-        if not i % 5:
-            histo.nuevo_dato(replicadores.mean()) #ojo, si hay muchos agentes, hay cond. carrera
+        if not i % 1000:
+            histo.nuevo_dato(sistema.mean())
+            print(f"ETA: ----- {100.0 * i / pasos:.2f}%")
     
-    return {"N": n,
+    return {"N": sistema.n,
             "histo": histo,
             "bar_x_t": bar_x_t,
             "sigma_bar_x_t": sigma_bar_x_t
             }
 
+#%% Simulaciones
+#----------Parámetros de la red
+M = 50
+hijos_mean = 2
+#----------
 archivos = os.listdir("../Agentes_replicadores/data/")
 experimentos = [os.path.join("../Agentes_replicadores/data/", archivo)
                 for archivo in archivos if "density_N" in archivo]

@@ -199,7 +199,7 @@ def marriages_F1(p2c):
 
     return sucess, c2p, spouse, gender     
 
-def generate_network(N_2,mean_n):
+def generate_network(N_2,mean_n=2.022):
     
     '''
     Creates a kinship network of a population descendant of M couples of parents. 

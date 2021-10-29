@@ -211,9 +211,9 @@ def generate_network(N_2,mean_n):
         -both nodes are single (monogamous couples)
     
     Input: 
-            -number of people in children population N
-            -'a' to compute f(n)=A*a^(-n)
-            -start_zero=True means that n starts in zero or one (false), this changes A
+            -total number of people in population N_2
+            -mean_n   meaning the wanted mean number of children per couple parents
+            
     
     Output:
             Returns a Graph (the kinship network of the population).

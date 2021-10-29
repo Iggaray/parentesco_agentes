@@ -199,7 +199,7 @@ def marriages_F1(p2c):
 
     return sucess, c2p, spouse, gender     
 
-def generate_network(N,f_n, acum):
+def generate_network(N_2,mean_n):
     
     '''
     Creates a kinship network of a population descendant of M couples of parents. 
@@ -225,6 +225,17 @@ def generate_network(N,f_n, acum):
                 -marriage relation (spouse of the node)
 
     '''
+    #####Inizialization of parameters######
+    N=N_2//2
+    alpha=mean_n/2
+    a=1+1/mean_n
+    max_n=25
+    
+    #########Create f_n and accum####
+    a=1+1/(2*alfa)
+            
+    f_n={i: (1-1/a)*a**(-i) for i in range(0,n_max)}
+    acum=acumulate_prob_dict(f_n)
     
     
     

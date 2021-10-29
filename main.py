@@ -12,7 +12,8 @@ from matplotlib import pyplot as plt
 from medidores import Media, Desvio_Estandar, Histo_Log
 import os
 
-def simulacion(M, mean_hijes, q=0.1, lamda=1.0, u_adim=1e-2, a=1.0, dt=1e-3):
+def simulacion(M, mean_hijes, pasos = 10**5,
+               q=0.1, lamda=1.0, u_adim=1e-2, a=1.0, dt=1e-3):
     """Simulación de un sistema de replicadores emparentados.
     
     Devuelve un diccionario con el tamaño del sistema, un histograma de los
@@ -30,37 +31,49 @@ def simulacion(M, mean_hijes, q=0.1, lamda=1.0, u_adim=1e-2, a=1.0, dt=1e-3):
         a = a, 
         dt = dt
         )
-    
+
     sistema.transitorio(pasos=10000)
     
     bar_x_t = Media()
     sigma_bar_x_t = Desvio_Estandar()
-    histo = Histo_Log(
+    
+    histo_media = Histo_Log(
         xmin = u_adim / sistema.n,
         xmax = 1.0 / sistema.n,
         nbins = 100
         )
-    pasos = 10 ** 5
+    histo_recursos = Histo_Log(
+        xmin = u_adim / sistema.n,
+        xmax = 1.0 / sistema.n,
+        nbins = 100
+        )
     
+ 
     for i in range(pasos):
         sistema.step()
         if not i % 1000:
             mu = sistema.mean()
-            histo.nuevo_dato(mu)
+            histo_media.nuevo_dato(mu)
+            for x in sistema.x:
+                histo_recursos.nuevo_dato(x)
             print(f"ETA: ----- {100.0 * i / pasos:.2f}%")
     
     return {"N": sistema.n,
-            "histo": histo,
-            "bar_x_t": bar_x_t,
-            "sigma_bar_x_t": sigma_bar_x_t
+            "histo_media": histo_media,
+            "histo_recursos": histo_recursos
             }
 
 #%% Simulaciones
 #----------Parámetros de la red
 N = 1000 #numero total de agentes
 M = 20
+
 hijos_mean = 2
 #----------
 dic = simulacion(M, hijos_mean)
-histo = dic['histo']
-histo.plot_densidad(scale='log')
+histo_media = dic['histo_media']
+histo_recursos = dic['histo_recursos']
+histo_recursos.plot_densidad(scale='log')
+histo_media = dic['histo_media']
+histo_media.plot_densidad(scale='log')
+plt.legend(["Recursos", "Media"], loc='best')

@@ -2,6 +2,7 @@ import random as rd
 import pyvis
 
 
+
 def load_distr(filename, has_headers=True):
     '''
     Function that uploads the probability distribution and returns a dictionary with it. 
@@ -18,7 +19,7 @@ def load_distr(filename, has_headers=True):
     types=[int, float]
     with open(filename, 'rt') as rows:   
         if has_headers:
-            headers=next(rows)
+            next(rows)
             for line in rows:
                 line=line.split('\t')
                 n_p=['', '']
@@ -90,7 +91,7 @@ def binary_search_list(L, x):
     
     return pos
  
-def create_F1(M, f_n):
+def create_F1(N, f_n, acum):
     '''
     Creates a population of M couples. Each copules has n children with probability f_n. 
     Returns a dictionary containing the list of children per couple and a dictionary containing 
@@ -100,22 +101,21 @@ def create_F1(M, f_n):
     #M is the number of couples that we want
     #f_n is the probability distribution that we want those couples to have
 
-    acum=acumulate_prob_dict(f_n)
+    
 
     #parents couples to children list contains the information of   couple_ID: [child_ID, child_ID]
     pc2cl={}
 
-    #gender dictionary contains the information of gender for child population inf the form    child_ID: gender
-    # 'm' holds for males and 'f' for females
-    gender={}
 
     acum_list_values=[acum[k] for k in list(acum.keys())]  
     acum_list_keys=[int(k) for k in list(acum.keys())]
     
-    child_ID_counter=1
+    child_ID_counter=0
 
+    N_dyn=0
+    M_dyn=0
 
-    for i in range(M):
+    while N_dyn<2*(N):
         # generate a random number 'r' between 0 and 1
         r=rd.random()       
         
@@ -124,43 +124,36 @@ def create_F1(M, f_n):
         if k==len(acum_list_keys):
             k-=1
         n=acum_list_keys[k]
-        #print(n)
+        N_dyn+=n
         
-        # add 'n' children to cuple i
+        if N_dyn>2*(N):
+            n-=N_dyn-2*(N)
+            N_dyn=2*N
+        
+
         if n:
             for aux in range(n):
                 try:
-                    pc2cl[i].append(child_ID_counter)
+                    pc2cl[M_dyn].append(child_ID_counter)
                 except:
-                    pc2cl[i]=[child_ID_counter]
+                    pc2cl[M_dyn]=[child_ID_counter]
+
                 child_ID_counter+=1
+        
         elif n==0:
-            pc2cl[i]=[]
-    
-    # asign random gender to those n children and write it in gender dictionary
-    m=0
-    for c in range(1,child_ID_counter+1):
-        r=rd.random()
-        if r<0.5:
-            gender[c]='m'
-            m+=1
-        else:
-            gender[c]='f'
+            pc2cl[M_dyn]=[]
+
+        M_dyn+=1
+    #print('Ndyn=', N_dyn)
+    #print('M_dyn=', M_dyn)
+    #print('max_ID=', child_ID_counter)
     
 
     
-    return pc2cl, gender
+    return pc2cl
 
 
-def marriages_F1(p2c, gender):
-    '''
-    Given a dict parent[i]:[child1, child2, ...] and a gender[i]: male/female dict, assings marriage at
-    random in population of children, preventing sibling marriages and polygamous couples.
-
-    returns a dict  person: parents, a dict person: spouse, list of people getting married
-
-    '''
-
+def marriages_F1(p2c):
     #make a list of all people in F1 and reverse the p2c  (make a dictionary of child: parent_couple)
     F1_population=[]
     c2p={}
@@ -168,13 +161,17 @@ def marriages_F1(p2c, gender):
         F1_population+=p2c[k]
         for e in p2c[k]:
             c2p[e]=k
+
+    #print('Length of population used for marriages=', len(F1_population))
     
     #empty list for engaged people
     engaged=[]
     spouse={}
+    gender={}
 
     
     count=0
+    sucess=1
     while(len(engaged)<len(F1_population) and count<10*len(F1_population)):
         ok=0
         count=0
@@ -184,29 +181,28 @@ def marriages_F1(p2c, gender):
             x, y=rd.choices(F1_population, k=2)
             count+=1
             #condition: y must not be of the same gender, and not a blood sibling
-            if gender[x]!=gender[y] and c2p[x]!=c2p[y] and x not in engaged and y not in engaged:
+            if c2p[x]!=c2p[y] and x not in engaged and y not in engaged:
                 spouse[x]=y
                 spouse[y]=x
+                gender[x]='m'
+                gender[y]='f'
                 #add x and y to the list of engaded people
                 engaged.append(x)
                 engaged.append(y)
                 ok=1
                 
             if count>=10*len(F1_population):
+                sucess=0
                 break
 
-    return c2p, spouse, engaged      
+    del engaged, count, ok
 
+    return sucess, c2p, spouse, gender     
 
-
-
-
-
-def generate_population(M, a, start_zero=True):
+def generate_network(num_nodos, mean_hijos=2.022):
     
     '''
-    Creates a population descendant of M couples of parents.
-    
+    Creates a kinship network of a population descendant of M couples of parents. 
     The f(n) function, namely the probability that a couple of parents has 'n' children, is exponential.
     Gender is asigned fully at random to each person (male and female only).
     Marriages are assigned fully random between nodes in population of children if:
@@ -215,45 +211,55 @@ def generate_population(M, a, start_zero=True):
         -both nodes are single (monogamous couples)
     
     Input: 
-            -number of couples of parents M
-            -'a' to compute f(n)=A*a^(-n)
-            -start_zero=True means that n starts in zero or one (false), this changes A
+            -total number of people in population num_nodos
+            -mean_hijos   meaning the wanted mean number of children per couple parents
+            
     
     Output:
-            Returns a list of tuples [(node1, node2), (node1, node7), ...] representing the edges of a kinship network on population.
+            Returns a Graph (the kinship network of the population).
             
-            Links are builded by chossing:
+            Nodes are the members of the population of both genders
+
+            Edges are builded by chossing:
                 -in blood relations (brothers and sisters of a node)
                 -marriage relation (spouse of the node)
 
     '''
+    #####Inizialization of parameters######
+    N=num_nodos//2
+    alpha=mean_hijos/2
+    a=1+1/mean_hijos
+    max_n=25
     
-    ##################Definition of the f(n) distribution###########################
-    f_n={}
-
-    if start_zero:
-        for i in range(0,60):
-            f_n[i]=(1-1/a)*a**(-i)
-    elif not start_zero:
-        for i in range(1,60):
-            f_n[i]=(a-1)*a**(-i)
+    #########Create f_n and accum####
+    a=1+1/(2*alpha)
+            
+    f_n={i: (1-1/a)*a**(-i) for i in range(0, max_n)}
+    acum=acumulate_prob_dict(f_n)
     
-
     
-    ########################Create population##########################################
     
     #Creating the F1 generation
 
-    p2c, gender=create_F1(M, f_n)
+    p2c=create_F1(N, f_n, acum)
 
 
     #Assignation of random marriages
 
-    c2p, spouses_dict, popul_F1=marriages_F1(p2c, gender)
+    sucess, c2p, spouses_dict, gender=marriages_F1(p2c)
+
+    while not sucess:
+        sucess, c2p, spouses_dict, gender=marriages_F1(p2c)
+        #print('Hizo falta volver a asignar matrimonios')
+
 
     
-    ######################Build graph (list of tuples)#################
+    ######################Build graph #################
     T=[]
+    
+    popul_F1=list(p2c.keys())
+   
+    
     
 
     #Add blood siblings edges
@@ -261,22 +267,22 @@ def generate_population(M, a, start_zero=True):
         L=p2c[e]
         for i in range(0, len(L)-1):
             for j in range(i+1, len(L)):
-                if L[i] in popul_F1 and L[j] in popul_F1:
+                T.append((L[i], L[j]))
+                
+
                     
-                    T.append((L[i], L[j]))
+                    
                    
         
     #Add marriage links
-    gdr=gender[popul_F1[0]]
-    for p in popul_F1:
+    #print(gender)
+    gdr='m'
+    for p in range(2*N):
+        #print(p, 'gender[p]==gdr?', gender[p]==gdr)
         if gender[p]==gdr:
-            
             T.append((p, spouses_dict[p]))
-    
-    del gdr, spouses_dict, popul_F1, p2c, c2p, gender, f_n
-
-
-    
+            
+            
 
     return T
 
@@ -317,7 +323,7 @@ class Kinship_net(object):
         a: parámetro de la probabilidad de n hijos por pareja: f(n)=A*a^(-n)
         """       
         #construyo la red
-        self.lista = generate_population(M, a)
+        self.lista = generate_network(M, a)
         self.M = M
         self.a = a
         

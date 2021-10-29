@@ -340,13 +340,13 @@ class Kinship_net(object):
         """Devolver un diccionario de nodos y listas de vecinos asociados
         """ 
         grafo = []
-        #completo los pares recíprocos y quito la unidad
+        #completo los pares recíprocos y quito la unidad para que arranque en 0
         for tupla in self.lista[:len(self.lista)]:
             x, y = tupla
             grafo.append((x - 1, y - 1))
             grafo.append((y - 1, x - 1))
         
-        #ordeno el grafo
+        #ordeno la lista de nodos
         grafo.sort()     
         #genero el diccionario de vecinos para cada nodo
         dic_vecinos = {}

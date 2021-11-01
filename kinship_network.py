@@ -293,16 +293,14 @@ def generate_network(N_total, n_mean):
     
     
     
-    #Dictionary of neighbours of a node   neigh[k]=[node_1, node_2, ....]
-    neigh={i: [v for v in G.neighbors(i)] for i in range(2*N)}
-
+    
     #print(neigh)
 
 
 
             
 
-    return neigh
+    return G
 
 
 
@@ -334,7 +332,7 @@ class Kinship_net(object):
         un nodo y tiene una lista de vecinos asociada
     show : método para graficar la red
     """
-    def __init__(self, M, a):
+    def __init__(self, N_total, n_mean):
         """Construir una red de parentesco con parámetros M y a
         
         Input
@@ -342,55 +340,34 @@ class Kinship_net(object):
         M: numero de parejas inicial
         a: parámetro de la probabilidad de n hijos por pareja: f(n)=A*a^(-n)
         """       
+        
+        
+        self.N = N_total//2
+        self.alpha = n_mean//2
+        self.n_max=25
+        
+        ####Build f_n   acum  ####################
+        
+        a=1+1/(2*alfa)
+        f_n={i: (1-1/a)*a**(-i) for i in range(0,n_max)}
+        acum=acumulate_prob_dict(f_n)
+        
+        #######################
+        
         #construyo la red
-        self.lista = generate_network(M, a)
-        self.M = M
-        self.a = a
+        self.grafo = generate_network(N_tot, f_n, acum)
         
-        #genero un objeto Network con la lista de tuplas de nodos
-        self.nodos = set()
-        for tupla in self.lista:
-            self.nodos.add(tupla[0])
-            self.nodos.add(tupla[1])
-        
-        for i in range(max(self.nodos)): #completo los nodos sin edge
-            self.nodos.add(i)
-            
-        self.net = pyvis.network.Network()
-        for nodo in self.nodos:
-            self.net.add_node(nodo)
-        for edge in self.lista:
-            self.net.add_edge(*edge)
+       
             
     def generar_dic_vecinos(self):
         """Devolver un diccionario de nodos y listas de vecinos asociados
         """ 
-        grafo = []
-        #completo los pares recíprocos y quito la unidad para que arranque en 0
-        for tupla in self.lista[:len(self.lista)]:
-            x, y = tupla
-            grafo.append((x - 1, y - 1))
-            grafo.append((y - 1, x - 1))
         
-        #ordeno la lista de nodos
-        grafo.sort()     
-        #genero el diccionario de vecinos para cada nodo
-        dic_vecinos = {}
-        for tupla in grafo:
-            i, j = tupla
-            if i not in dic_vecinos:
-                dic_vecinos[i] = [j]
-            else:
-                dic_vecinos[i].append(j)
+        neigh={i: [v for v in self.grafo.neighbors(i)] for i in range(2*self.N)}
         
-        for nodo in self.nodos: #los nodos estan referidos a si mismos
-            if nodo not in dic_vecinos:
-                dic_vecinos[nodo] = [nodo]
-            else:
-                dic_vecinos[nodo].append(nodo)
+        return neigh
         
-        self.dic_vecinos = dic_vecinos
-        return dic_vecinos
+       
     
     def show(self):
         """Mostrar la red
@@ -398,4 +375,4 @@ class Kinship_net(object):
         #pendiente: estaria buenisimo que grafique el tamaño de los nodos en
         #función del promedio temporal de recursos de cada uno. computar eso 
         #igual tomaria una banda de tiempo. GPU con cupy?
-        self.net.show('my_net.html')
+        pass

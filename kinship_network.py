@@ -207,7 +207,7 @@ def marriages_F1(N, p2c, c2p):
 
     return sucess, spouse, gender     
 
-def generate_network(N_total, n_mean):
+def generate_network(N, f_n, acum):
     
     '''
     Creates a kinship network of a population descendant of M couples of parents. 
@@ -232,11 +232,7 @@ def generate_network(N_total, n_mean):
 
     '''
     
-    N=N_total//2
-    alpha=n_mean/2
-    
-    f_n, acum
-    
+ 
     
     
     #Creating the F1 generation
@@ -349,13 +345,13 @@ class Kinship_net(object):
         ####Build f_n   acum  ####################
         
         a=1+1/(2*alfa)
-        f_n={i: (1-1/a)*a**(-i) for i in range(0,n_max)}
+        f_n={i: (1-1/a)*a**(-i) for i in range(0,self.n_max)}
         acum=acumulate_prob_dict(f_n)
         
         #######################
         
         #construyo la red
-        self.grafo = generate_network(N_tot, f_n, acum)
+        self.grafo = generate_network(self.N, f_n, acum)
         
        
             

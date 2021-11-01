@@ -1,6 +1,8 @@
-import random as rd
 import pyvis
-
+import random as rd
+import numpy as np
+import networkx as nx
+import matplotlib.pyplot as plt
 
 
 def load_distr(filename, has_headers=True):
@@ -19,7 +21,7 @@ def load_distr(filename, has_headers=True):
     types=[int, float]
     with open(filename, 'rt') as rows:   
         if has_headers:
-            next(rows)
+            headers=next(rows)
             for line in rows:
                 line=line.split('\t')
                 n_p=['', '']
@@ -106,6 +108,10 @@ def create_F1(N, f_n, acum):
     #parents couples to children list contains the information of   couple_ID: [child_ID, child_ID]
     pc2cl={}
 
+    #c2p[i]: m_i   indicates at which parent couple is linked the chidl i
+    c2p={}
+
+
 
     acum_list_values=[acum[k] for k in list(acum.keys())]  
     acum_list_keys=[int(k) for k in list(acum.keys())]
@@ -121,8 +127,11 @@ def create_F1(N, f_n, acum):
         
         # find out where 'r' is in the accumulate curve, and that gives us the number 'n' of children added to couple i
         k=binary_search_list(acum_list_values, r)
-        if k==len(acum_list_keys):
-            k-=1
+        
+        while k==len(acum_list_keys):
+            r=rd.random()
+            k=binary_search_list(acum_list_values, r)
+        
         n=acum_list_keys[k]
         N_dyn+=n
         
@@ -135,9 +144,11 @@ def create_F1(N, f_n, acum):
             for aux in range(n):
                 try:
                     pc2cl[M_dyn].append(child_ID_counter)
+                    
                 except:
                     pc2cl[M_dyn]=[child_ID_counter]
 
+                c2p[child_ID_counter]=M_dyn
                 child_ID_counter+=1
         
         elif n==0:
@@ -150,29 +161,24 @@ def create_F1(N, f_n, acum):
     
 
     
-    return pc2cl
+    return pc2cl, c2p, M_dyn
 
 
-def marriages_F1(p2c):
+def marriages_F1(N, p2c, c2p):
     #make a list of all people in F1 and reverse the p2c  (make a dictionary of child: parent_couple)
-    F1_population=[]
-    c2p={}
-    for k in p2c.keys():
-        F1_population+=p2c[k]
-        for e in p2c[k]:
-            c2p[e]=k
+    F1_population=[i for i in range(2*N)]
 
     #print('Length of population used for marriages=', len(F1_population))
     
     #empty list for engaged people
-    engaged=[]
+    #engaged=[]
     spouse={}
     gender={}
 
     
     count=0
     sucess=1
-    while(len(engaged)<len(F1_population) and count<10*len(F1_population)):
+    while(len(F1_population)!=0 and count<10*N*2):
         ok=0
         count=0
         
@@ -180,26 +186,28 @@ def marriages_F1(p2c):
             #pick 2 different individuals x and y from the F1 population
             x, y=rd.choices(F1_population, k=2)
             count+=1
-            #condition: y must not be of the same gender, and not a blood sibling
-            if c2p[x]!=c2p[y] and x not in engaged and y not in engaged:
+            #condition: not a blood sibling
+            if c2p[x]!=c2p[y]:
                 spouse[x]=y
                 spouse[y]=x
                 gender[x]='m'
                 gender[y]='f'
                 #add x and y to the list of engaded people
-                engaged.append(x)
-                engaged.append(y)
+                F1_population.pop(binary_search_list(F1_population, x))
+                F1_population.pop(binary_search_list(F1_population, y))
+                #engaged.append(x)
+                #engaged.append(y)
                 ok=1
                 
-            if count>=10*len(F1_population):
+            if count>=10*N*2:
                 sucess=0
                 break
 
-    del engaged, count, ok
+    del  count, ok
 
-    return sucess, c2p, spouse, gender     
+    return sucess, spouse, gender     
 
-def generate_network(num_nodos, mean_hijos=2.022):
+def generate_network(N_total, n_mean):
     
     '''
     Creates a kinship network of a population descendant of M couples of parents. 
@@ -211,68 +219,65 @@ def generate_network(num_nodos, mean_hijos=2.022):
         -both nodes are single (monogamous couples)
     
     Input: 
-            -total number of people in population num_nodos
-            -mean_hijos   meaning the wanted mean number of children per couple parents
-            
+            -number of people in children population N
+            -'a' to compute f(n)=A*a^(-n)
+            -start_zero=True means that n starts in zero or one (false), this changes A
     
     Output:
-            Returns a Graph (the kinship network of the population).
-            
-            Nodes are the members of the population of both genders
+            Returns a dictionary in the form
 
-            Edges are builded by chossing:
-                -in blood relations (brothers and sisters of a node)
-                -marriage relation (spouse of the node)
+            neighbors[node_i]=[node_x, node_y, node_w, ....]
+            
+            
 
     '''
-    #####Inizialization of parameters######
-    N=num_nodos//2
-    alpha=mean_hijos/2
-    a=1+1/mean_hijos
-    max_n=25
     
-    #########Create f_n and accum####
-    a=1+1/(2*alpha)
-            
-    f_n={i: (1-1/a)*a**(-i) for i in range(0, max_n)}
-    acum=acumulate_prob_dict(f_n)
+    N=N_total//2
+    alpha=n_mean/2
+    
+    f_n, acum
     
     
     
     #Creating the F1 generation
 
-    p2c=create_F1(N, f_n, acum)
+    p2c,c2p, M=create_F1(N, f_n, acum)
+
+    del M
 
 
     #Assignation of random marriages
 
-    sucess, c2p, spouses_dict, gender=marriages_F1(p2c)
+    x=0
+
+    sucess, spouses_dict, gender=marriages_F1(N, p2c, c2p)
+
+    #print(len(spouses_dict.keys()))
 
     while not sucess:
-        sucess, c2p, spouses_dict, gender=marriages_F1(p2c)
+        x+=1
+        sucess, spouses_dict, gender=marriages_F1(N,p2c, c2p)
         #print('Hizo falta volver a asignar matrimonios')
+    
+    del x
 
 
     
-    ######################Build graph #################
-    T=[]
-    
+    ######################Build graph#################
+    G=nx.Graph()
     popul_F1=list(p2c.keys())
-   
-    
+    #print(popul_F1)
+    G.add_nodes_from([i for i in range(2*N)])      #Add nodes
     
 
     #Add blood siblings edges
     for e in list(p2c.keys()):
         L=p2c[e]
+        
         for i in range(0, len(L)-1):
             for j in range(i+1, len(L)):
-                T.append((L[i], L[j]))
-                
-
-                    
-                    
-                   
+                G.add_edge(L[i], L[j])
+  
         
     #Add marriage links
     #print(gender)
@@ -280,11 +285,26 @@ def generate_network(num_nodos, mean_hijos=2.022):
     for p in range(2*N):
         #print(p, 'gender[p]==gdr?', gender[p]==gdr)
         if gender[p]==gdr:
-            T.append((p, spouses_dict[p]))
+            G.add_edge(p, spouses_dict[p])
             
+     #Add in law siblings
+    
+    
+    
+    
+    
+    #Dictionary of neighbours of a node   neigh[k]=[node_1, node_2, ....]
+    neigh={i: [v for v in G.neighbors(i)] for i in range(2*N)}
+
+    #print(neigh)
+
+
+
             
 
-    return T
+    return neigh
+
+
 
 class Kinship_net(object):
     """Clase que representa un grafo

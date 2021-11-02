@@ -101,19 +101,18 @@ class Replicadores_parentesco(Sistema):
             paso temporal de integración.
     """
     
-    def __init__(self, M, n_mean, x0, q, lamda, u, a, dt):
-        self.red = Kinship_net(M, a = 1.0 + 1.0 / n_mean)
+    def __init__(self, N_total, n_mean, x0, q, lamda, u, a, dt):
+        self.red = Kinship_net(N_total, n_mean)
         self.vecinos = self.red.generar_dic_vecinos()
-        n = max(self.red.nodos) #numero de agentes
         super().__init__(
-            n,
-            x0 * np.ones(n),
-            q * np.ones(n),
-            lamda * np.ones(n),
-            u * np.ones(n) / n,
+            N_total,
+            x0 * np.ones(N_total),
+            q * np.ones(N_total),
+            lamda * np.ones(N_total),
+            u * np.ones(N_total) / N_total,
             dt
             )
-        self.a = np.ones(n) * a * dt
+        self.a = np.ones(N_total) * a * dt
     
     def step(self):
         """Paso de evolución """

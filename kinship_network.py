@@ -261,7 +261,6 @@ def generate_network(N, f_n, acum):
     
     ######################Build graph#################
     G=nx.Graph()
-    popul_F1=list(p2c.keys())
     #print(popul_F1)
     G.add_nodes_from([i for i in range(2*N)])      #Add nodes
     
@@ -338,13 +337,13 @@ class Kinship_net(object):
         """       
         
         
-        self.N = N_total//2
-        self.alpha = n_mean//2
-        self.n_max=25
+        self.N = N_total // 2
+        self.alpha = n_mean / 2
+        self.n_max = 25
         
         ####Build f_n   acum  ####################
         
-        a=1+1/(2*alfa)
+        a=1+1/(2*self.alpha)
         f_n={i: (1-1/a)*a**(-i) for i in range(0,self.n_max)}
         acum=acumulate_prob_dict(f_n)
         
@@ -371,4 +370,9 @@ class Kinship_net(object):
         #pendiente: estaria buenisimo que grafique el tamaño de los nodos en
         #función del promedio temporal de recursos de cada uno. computar eso 
         #igual tomaria una banda de tiempo. GPU con cupy?
+        if self.pyvis_graph == None:
+            # instancio el objeto pyvis para visualizar grafo
+            self.pyvis_graph = pyvis.network.Network()
+            for edge in self.grafo.edges():
+                pass
         pass

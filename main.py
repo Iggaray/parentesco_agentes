@@ -12,9 +12,9 @@ from matplotlib import pyplot as plt
 from medidores import Media, Desvio_Estandar, Histo_Log
 import os
 
-def simulacion(M, mean_hijes, pasos = 10**5,
+def simulacion(N_total, mean_hijes, pasos = 10**5,
                q=0.1, lamda=1.0, u_adim=1e-2, a=1.0, dt=1e-3):
-    """Simulación de un sistema de replicadores emparentados.
+    """Simulación de un sistema de  N_total replicadores emparentados.
     
     Devuelve un diccionario con el tamaño del sistema, un histograma de los
     valores totales de recursos visitados, promedio temporal acumulado y
@@ -22,9 +22,9 @@ def simulacion(M, mean_hijes, pasos = 10**5,
     """
     
     sistema = Replicadores_parentesco(
-        M,
+        N_total,
         mean_hijes,
-        x0 = 1.0 / M / mean_hijes,
+        x0 = 1.0 / N_total / mean_hijes,
         q = q,
         lamda = lamda,
         u = u_adim,
@@ -40,12 +40,12 @@ def simulacion(M, mean_hijes, pasos = 10**5,
     histo_media = Histo_Log(
         xmin = u_adim / sistema.n,
         xmax = 1.0 / sistema.n,
-        nbins = 100
+        nbins = 20
         )
     histo_recursos = Histo_Log(
         xmin = u_adim / sistema.n,
         xmax = 1.0 / sistema.n,
-        nbins = 100
+        nbins = 20
         )
     
  
@@ -65,12 +65,11 @@ def simulacion(M, mean_hijes, pasos = 10**5,
 
 #%% Simulaciones
 #----------Parámetros de la red
-N = 1000 #numero total de agentes
-M = 20
+N_total = 100 #numero total de agentes
 
 hijos_mean = 2
 #----------
-dic = simulacion(M, hijos_mean)
+dic = simulacion(N_total, hijos_mean, a=0)
 histo_media = dic['histo_media']
 histo_recursos = dic['histo_recursos']
 histo_recursos.plot_densidad(scale='log')

@@ -308,10 +308,10 @@ class Kinship_net(object):
     
     Parámetros
     ----------
-    M : número inicial de parejas
-    a : parámetro de la probabilidad de n hijos por pareja: f(n)=A*a^(-n)
+    N_total : número de agentes en la población
+    n_mean : número medio de hijos por pareja de padre
     
-    Atributos
+    Atributos    ####  Update this
     ---------
     lista : list
         lista de tuplas con aristas entre nodos [(n1, n2), ..., (ni, nj)]
@@ -322,26 +322,29 @@ class Kinship_net(object):
     
     Métodos
     -------
-    __init__ : constructor que genera la red a partir de M y a
+    __init__ : constructor que genera la red de N_total agentes y a
     generar_dic_vecinos : método que devuelve un diccionario donde cada key es
         un nodo y tiene una lista de vecinos asociada
     show : método para graficar la red
     """
     def __init__(self, N_total, n_mean):
-        """Construir una red de parentesco con parámetros M y a
+        """Construir una red de parentesco con parámetros N y n_mean=2*alpha
         
         Input
         -----
-        M: numero de parejas inicial
-        a: parámetro de la probabilidad de n hijos por pareja: f(n)=A*a^(-n)
+        N_tot: numero total de agentes
+        n_mean: numero medio de hijos por pareja de padres
         """       
         
         
-        self.N = N_total // 2
+        self.N = N_total // 2           # En el modelo se trabaja con N personas de cada genero, 
+                                        #haciendo 2N personas en total
         self.alpha = n_mean / 2
-        self.n_max = 25
         
-        ####Build f_n   acum  ####################
+        self.n_max = 25                 #Esto es un top que ponemos para que sea más realista el modelo
+                                        #Parejas con más de 25 hijos son imposibles
+        
+        #########Build f_n  and acum  ####################
         
         a=1+1/(2*self.alpha)
         f_n={i: (1-1/a)*a**(-i) for i in range(0,self.n_max)}
@@ -361,6 +364,28 @@ class Kinship_net(object):
         neigh={i: [v for v in self.grafo.neighbors(i)] for i in range(2*self.N)}
         
         return neigh
+
+    def segregate_per_neighbours(self):
+        '''
+        Devuelve un diccionario de la forma:
+
+        k : [agente1, agente2, ...]
+
+        O sea, agrupa una lista de agentes que tienen k vecinos
+
+        1 <= k <= 26
+
+        '''
+        k_agents={i:[] for i in range(1,27)}
+        node_k=self.generar_dic_vecinos()
+        for j in node_k.keys():
+            L=len(node_k[j])
+            
+            k_agents[L].append(j)
+        
+        return j
+            
+
         
        
     

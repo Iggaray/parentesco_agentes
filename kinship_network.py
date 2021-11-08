@@ -383,7 +383,7 @@ class Kinship_net(object):
             
             k_agents[L].append(j)
         
-        return j
+        return k_agents
             
 
         

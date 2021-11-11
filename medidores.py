@@ -87,9 +87,14 @@ class Histograma(object):
     def nuevo_dato(self, x):
         '''Agregar un conteo en el bin correspondiente
         '''
-        self.cuentas[self.index(x)] += 1
-        self.paso += 1
-    
+        if x is float:
+            self.cuentas[self.index(x)] += 1
+            self.paso += 1
+        
+        else:
+            self.cuentas[self.index(x)] += 1
+            self.paso += x.size
+
     def plot_histo(self, xlabel=None, ylabel=None, title=None):
         '''Graficar histograma
         '''
@@ -110,9 +115,9 @@ class Histograma(object):
         f = self.densidad()
         x = (self.bins[:-1] + self.bins[1:]) / 2 #Centrado en los bines
         if scale=='linear':
-            plt.plot(x[f>0], f[f>0], linestyle='-', marker='.')
+            plt.plot(x[f>0], f[f>0], ls='-', lw=1)
         if scale=='log':
-            plt.loglog(x[f>0], f[f>0], linestyle='-', marker='.')
+            plt.loglog(x[f>0], f[f>0], ls='-', lw=1)
     
 class Histo_Lineal(Histograma):
     '''Histograma con bineo lineal

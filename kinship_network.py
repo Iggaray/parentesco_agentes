@@ -300,31 +300,32 @@ def generate_network(N, f_n, acum):
 
 
 class Kinship_net(object):
-    """Clase que representa un grafo
+    """Clase que representa un grafo de parentesco
     
-    Permite instanciar grafos a partir de una lista de tuplas. Se pueden
-    generar representaciones como diccionario de nodos y sus respectivos
-    vecinos. También es posible graficar la red.
+    Se pueden generar representaciones como diccionario de nodos y sus
+    respectivos vecinos. También es posible graficar la red.
     
     Parámetros
     ----------
     N_total : número de agentes en la población
-    n_mean : número medio de hijos por pareja de padre
+    n_mean : número medio de hijos por pareja de padres
     
     Atributos    ####  Update this
     ---------
-    lista : list
-        lista de tuplas con aristas entre nodos [(n1, n2), ..., (ni, nj)]
-    nodos : set
-        conjunto de nodos de la red
-    net : pyvis.network.Network
-        objeto que representa la red
+    grafo : objeto Graph de la libreria networkx
+        
+    N : int
+        número de nodos de la red
+    n_max : int
+        máximo número permitido de hijes por pareja
     
     Métodos
     -------
-    __init__ : constructor que genera la red de N_total agentes y a
+    __init__ : constructor que genera la red de N_total agentes
+    
     generar_dic_vecinos : método que devuelve un diccionario donde cada key es
         un nodo y tiene una lista de vecinos asociada
+        
     show : método para graficar la red
     """
     def __init__(self, N_total, n_mean):
@@ -365,7 +366,7 @@ class Kinship_net(object):
         
         return neigh
 
-    def segregate_per_neighbours(self):
+    def segregate_per_neighbours(self, k_list):
         '''
         Devuelve un diccionario de la forma:
 
@@ -376,18 +377,17 @@ class Kinship_net(object):
         1 <= k <= 26
 
         '''
-        k_agents={i:[] for i in range(1,27)}
-        node_k=self.generar_dic_vecinos()
+        k_agents = {i:[] for i in k_list}
+        node_k = self.generar_dic_vecinos()
         for j in node_k.keys():
-            L=len(node_k[j])
+            L = len(node_k[j])
+            if L in k_agents:
+                k_agents[L].append(j)
             
-            k_agents[L].append(j)
-        
+        #paso cada lista a np.array int32
+        for key in k_agents.keys():
+            k_agents[key] = np.array(k_agents[key], dtype=np.int32)
         return k_agents
-            
-
-        
-       
     
     def show(self):
         """Mostrar la red

@@ -343,6 +343,7 @@ class Kinship_net(object):
         
         self.n_max = 25                 #Esto es un top que ponemos para que sea más realista el modelo
                                         #Parejas con más de 25 hijos son imposibles
+        self.nombre = f"Red_N{N_total:d}_nmean{n_mean:d}"
         
         #########Build f_n  and acum  ####################
         
@@ -399,25 +400,29 @@ class Kinship_net(object):
         """
         
         #Initialization
-        nt=Network('500px', '500px')
+        nt = Network('500px', '500px')
         
 
         
         
         
-        if resources=={}:
+        if resources is {}:
             
             nt.from_nx(self.grafo)
             
-            nt.show()
+            nt.show(self.nombre + '.html')
         
         else:
             nodes=list(self.grafo.nodes)
-            edges=self.grafo.edges
-            g.add_nodes(nodes, value=[resources[i] for i in nodes])
+            edges = list(self.grafo.edges)
+            nt.add_nodes(nodes, value=[resources[i] for i in nodes])
             for element in edges:
-                g.add_edges(element[0], element[1])
+                nt.add_edge(element[0], element[1])
             
-            nt.show()
+            nt.show(self.nombre + '.html')
 
+recursos = np.random.rand(20)
+dic = {i: recursos[i] for i in range(0, 20)}
+red = Kinship_net(20, 2)
+red.show(dic)
 

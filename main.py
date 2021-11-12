@@ -52,6 +52,11 @@ def simulacion(N_total, mean_hijes, pasos = 10**6,
         xmax = 1.0 / sistema.n,
         nbins = 100
         ) for i in k_list}
+    
+    # diccionario con listas de nodos segun numero de vecinos (key)
+    dict_vecinos = sistema.red.segregate_per_neighbours(k_list)
+    
+    medias = [Media() for i in range(N_total)]
  
     for i in range(pasos):
         sistema.step()
@@ -59,16 +64,20 @@ def simulacion(N_total, mean_hijes, pasos = 10**6,
             mu = sistema.mean()
             histo_media.nuevo_dato(mu)
             histo_recursos.nuevo_dato(sistema.x)
-            dict_vecinos = sistema.red.segregate_per_neighbours(k_list)
             for n, histo in list(
                     zip(dict_vecinos.keys(), dict_vecinos.values())):
                 histo_vecinos[n].nuevo_dato(sistema.x[dict_vecinos[n]])
+            
+            for j, media in enumerate(medias):
+                media.nuevo_dato(sistema.x[j])            
+            
             print(f"ETA: ----- {100.0 * i / pasos:.2f}%")
     
     return {"N": sistema.n,
             "histo_media": histo_media,
             "histo_recursos": histo_recursos,
-            "histos_vecinos": histo_vecinos
+            "histos_vecinos": histo_vecinos,
+            "recursos_promedio": medias
             }
 
 #%% Simulaciones

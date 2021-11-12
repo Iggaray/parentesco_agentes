@@ -102,8 +102,13 @@ class Replicadores_parentesco(Sistema):
     """
     
     def __init__(self, N_total, n_mean, x0, q, lamda, u, a, dt):
+        
+        
         self.red = Kinship_net(N_total, n_mean)
+        
         self.vecinos = self.red.generar_dic_vecinos()
+        
+        
         super().__init__(
             N_total,
             x0 * np.ones(N_total),
@@ -113,6 +118,8 @@ class Replicadores_parentesco(Sistema):
             dt
             )
         self.a = np.ones(N_total) * a * dt
+    
+    
     
     def step(self):
         """Paso de evolución """

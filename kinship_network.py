@@ -1,4 +1,4 @@
-import pyvis
+from pyvis.network import Network
 import random as rd
 import numpy as np
 import networkx as nx
@@ -210,23 +210,22 @@ def marriages_F1(N, p2c, c2p):
 def generate_network(N, f_n, acum):
     
     '''
-    Creates a kinship network of a population descendant of M couples of parents. 
-    The f(n) function, namely the probability that a couple of parents has 'n' children, is exponential.
-    Gender is asigned fully at random to each person (male and female only).
-    Marriages are assigned fully random between nodes in population of children if:
+    Creates a kinship network of a population with M men and M women. 
+    
+    Parents couples are dynamically created according to the given f_n function and his cummulative PDF.
+
+    Marriages within the populaton are assigned fully random between nodes in population of children if:
         -the nodes are not blood siblings (brother-sister)
         -the nodes has different gender (heterosexual couples mating)
         -both nodes are single (monogamous couples)
     
     Input: 
             -number of people in children population N
-            -'a' to compute f(n)=A*a^(-n)
-            -start_zero=True means that n starts in zero or one (false), this changes A
+            - f(n), namely probability that a couple of parents has 'n' children
+            -acum   is the Cummulative PDF of f(n)
     
     Output:
-            Returns a dictionary in the form
-
-            neighbors[node_i]=[node_x, node_y, node_w, ....]
+            Returns the graph of the population
             
             
 
@@ -389,15 +388,36 @@ class Kinship_net(object):
             k_agents[key] = np.array(k_agents[key], dtype=np.int32)
         return k_agents
     
-    def show(self):
-        """Mostrar la red
+    def show(self, resources={}):
         """
-        #pendiente: estaria buenisimo que grafique el tamaño de los nodos en
-        #función del promedio temporal de recursos de cada uno. computar eso 
-        #igual tomaria una banda de tiempo. GPU con cupy?
-        if self.pyvis_graph == None:
-            # instancio el objeto pyvis para visualizar grafo
-            self.pyvis_graph = pyvis.network.Network()
-            for edge in self.grafo.edges():
-                pass
-        pass
+        Shows a visual representation of the kinship network. 
+        Node sizes are proportional to agent resource (averaged during the stationary observation time). 
+        If no specific information on resource is given, then node sizes are default ones.
+
+        Input:
+            -Dictionary  "resources"   containing the resources of each agent. (default value is empty list)
+        """
+        
+        #Initialization
+        nt=Network('500px', '500px')
+        
+
+        
+        
+        
+        if resources=={}:
+            
+            nt.from_nx(self.grafo)
+            
+            nt.show()
+        
+        else:
+            nodes=list(self.grafo.nodes)
+            edges=self.grafo.edges
+            g.add_nodes(nodes, value=[resources[i] for i in nodes])
+            for element in edges:
+                g.add_edges(element[0], element[1])
+            
+            nt.show()
+
+

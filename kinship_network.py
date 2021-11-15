@@ -421,8 +421,4 @@ class Kinship_net(object):
             
             nt.show(self.nombre + '.html')
 
-recursos = np.random.rand(20)
-dic = {i: recursos[i] for i in range(0, 20)}
-red = Kinship_net(20, 2)
-red.show(dic)
 

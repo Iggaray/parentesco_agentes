@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 from medidores import Media, Desvio_Estandar, Histo_Log, Histo_Lineal
 import os
 
-def simulacion(N_total, mean_hijes, pasos = 10**6,
+def simulacion(N_total, mean_hijes, pasos = 10**5,
                q=0.1, lamda=1.0, u_adim=1e-2, a=1.0, dt=1e-3,
                k_list=range(1,8)):
     """Simulación de un sistema de  N_total replicadores emparentados.
@@ -73,6 +73,9 @@ def simulacion(N_total, mean_hijes, pasos = 10**6,
             
             print(f"ETA: ----- {100.0 * i / pasos:.2f}%")
     
+    dict_resources={i: medias[i].get() for i in range(N_total)}
+    sistema.red.show(resources=dict_resources)
+
     return {"N": sistema.n,
             "histo_media": histo_media,
             "histo_recursos": histo_recursos,
@@ -82,18 +85,41 @@ def simulacion(N_total, mean_hijes, pasos = 10**6,
 
 #%% Simulaciones
 #----------Parámetros de la red
-N_total = 100 #numero total de agentes
+N_total = 50 #numero total de agentes
 
 hijos_mean = 2
 #----------
+
+####  Simulation of the system
 dic = simulacion(N_total, hijos_mean, a=1)
+
+
+#Gather results
 histo_media = dic['histo_media']
 histo_recursos = dic['histo_recursos']
+
 histo_recursos.plot_densidad(scale='log')
-histo_media = dic['histo_media']
 histo_media.plot_densidad(scale='log')
-plt.legend(["Recursos", "Media"], loc='best')
+
+
+# Visualization of net
+
+
+#recursos = np.random.rand(20)
+#dic = {i: recursos[i] for i in range(0, 20)}
+#red = Kinship_net(20, 2)
+#red.show(dic)
+
+
+### Visualization of resources
+
+
 plt.figure()
+plt.legend(["Recursos", "Media"], loc='best')
+
 for histo in dic["histos_vecinos"].values():
     histo.plot_densidad(scale='log')
+
 plt.legend([f"$k={i:d}$" for i in dic["histos_vecinos"]], loc='best')
+
+plt.show()

@@ -133,8 +133,7 @@ class Replicadores_parentesco(Sistema):
         reseteos = self.rng.random(size=self.n) < self.p_res
         self.x[reseteos] = self.u[reseteos]
     
-    def show_net(self):
-        self.red.show()
+    
         
 class Desacoplados(Sistema):
     """Sistema de agentes multiplicativos con reseteo estocástico."""

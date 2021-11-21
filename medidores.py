@@ -12,6 +12,7 @@ from collections import Counter
 #medidores.py
 class Estadistico(object):
     """Estadístico genérico que se alimenta de datos en serie"""
+    
     def __init__(self, valor=0):
         self.valor = valor
         self.paso = 0
@@ -41,20 +42,6 @@ class Media(Estadistico):
     def get(self):
         return self.valor
 
-class Desvio_Estandar(Estadistico):
-    '''Esta clase funciona trabajando con la varianza primero, y con un getter
-    se obtiene el desvio estandar
-    '''
-    def __init__(self):
-        super().__init__(valor=0)
-    
-    def nuevo_dato(self, x):
-        self.valor *= (self.paso)/(self.paso+1)
-        self.valor += x**2 /(self.paso+1)
-        self.paso += 1
-    
-    def get(self, baricentro=0):
-        return np.sqrt(self.valor - baricentro**2)
     
 class Histograma(object):
     '''Histograma que usa una función de indexado para actualizar los conteos.
@@ -63,6 +50,10 @@ class Histograma(object):
     ----------
     bins : 1-d ndarray
         Contiene los bordes de los bines
+    cuentas : 1-d array de enteros
+        Contiene las cuentas realizadas en cada bin
+    paso : int
+        Número de muestras que lleva recolectadas el histograma
         
     Métodos
     -------

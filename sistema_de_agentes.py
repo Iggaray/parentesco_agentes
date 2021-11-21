@@ -11,7 +11,7 @@ import numpy as np
 from kinship_network import Kinship_net
 
 class Sistema(object):
-    """Sistema de agentes multiplicativos"""
+    """Sistema de agentes con recursos"""
     
     def __init__(self, n, x0, q, lamda, u, dt):
         self.n = n #numero de agentes
@@ -27,7 +27,7 @@ class Sistema(object):
     
     def step(self):
         """Ejecutar un paso de evolución"""
-        self.t += self.dt
+        pass
     
     def transitorio(self, pasos):
         """Ejecutar un número de pasos de evolución"""
@@ -42,42 +42,17 @@ class Sistema(object):
         """Calcular el desvío estándar de recursos del sistema"""
         return self.x.std
 
-class Replicadores(Sistema):
-    """Sistema de agentes replicadores con reseteo estocástico.
-    
-    Clase que representa un sistema de agentes competitivos según el modelo
-    del replicador que sufren reseteos estocásticos a tasa q:
-        \dot{x_i} = x_i (\lambda_i - \sum_j^N \lambda_j*x_j) +
-        (u_i - x_i)\delta(t - t_ik),
-    donde x_i son los recursos del i-ésimo agente, \lambda_i su fitness, u_i
-    su valor de reseteo, t_ik los instantes de reseteo del i-ésimo agente.
-    
-    public methods
-    --------------
-    step: paso de evolución
-    
-    """
-    
-    def __init__(self, n, x0, q, lamda, u, dt=1e-3):
-        super().__init__(n, x0, q, lamda, u, dt)
-    
-    def step(self):
-        """Paso de evolución """
-        bar_mu = (self.mu * self.x).sum()
-        self.x *= 1.0 + self.mu - bar_mu
-        self.t += self.dt
-        reseteos = self.rng.random(size=self.n) < self.p_res
-        self.x[reseteos] = self.u[reseteos]
-
-class Replicadores_parentesco(Sistema):
+class Replicadores_emparentados(Sistema):
     """Sistema de agentes replicadores-cooperativos con reseteo estocástico.
     
     La cooperación de este sistema está dada por un grafo no dirigido que
     representa vínculos de parentesco entre agentes. Cada agente sigue una
     ecuación dinámica del tipo
+    
         \dot{x_i} = x_i * (\lambda_i - \sum_j^N \lambda_j*x_j) +
                     a_i * (\hat x - x_i) +
                     (u_i - x_i)\delta(t - t_ik),
+                    
     donde \hat x representa el promedio sobre todos los primeros vecinos de
     un agente en el grafo de parentescos.
     
@@ -123,28 +98,28 @@ class Replicadores_parentesco(Sistema):
     
     def step(self):
         """Paso de evolución """
-        #calculo fitness promedio
-        bar_mu = (self.mu * self.x).sum()
-        #calculo el promedio de vecindades
-        hat_x = np.array([self.x[self.vecinos[i]].mean()
-                          for i in range(self.x.size)])
-        self.x += self.x * (self.mu - bar_mu) + self.a * (hat_x - self.x)
-        self.t += self.dt
-        reseteos = self.rng.random(size=self.n) < self.p_res
-        self.x[reseteos] = self.u[reseteos]
-    
-    
         
-class Desacoplados(Sistema):
-    """Sistema de agentes multiplicativos con reseteo estocástico."""
-    def __init__(self, n, x0, q, lamda, u, dt=1e-3):
-        super().__init__(n, x0, q, lamda, u, dt)
-    
-    def step(self):
-        self.x *= 1.0 + self.mu
-        self.t += self.dt
+        # calculo fitness promedio
+        bar_mu = (self.mu * self.x).sum()
+        
+        # calculo el promedio de los vecinos de cada agente x_i
+        hat_x = [self.x[self.vecinos[i]].mean() for i in range(self.x.size)]
+        hat_x = np.array(hat_x)
+        
+        # aplico el paso determinista de evolución
+        self.x += self.x * (self.mu - bar_mu) + self.a * (hat_x - self.x)
+        
+        # aplico los reseteos estocásticos
         reseteos = self.rng.random(size=self.n) < self.p_res
         self.x[reseteos] = self.u[reseteos]
-        #if any(reseteos):
-            #print(f"Resetearon {reseteos.sum():d} agentes en t={self.t:.3f}")
+        
+        self.t += self.dt
     
+    def show_net(self, dic_recursos):
+        """Mostrar grafo de parentescos
+        
+        Muestra una red con todos los agentes como vinculados. El tamaño de
+        nodo se fija según dic_recursos, diccionario con los recursos de cada
+        agente.
+        """
+        self.red.show(dic_recursos)

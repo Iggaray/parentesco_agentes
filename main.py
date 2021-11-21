@@ -6,23 +6,21 @@ Created on Sat Sep 11 14:37:14 2021
 @author: nacho
 """
 
-from sistema_de_agentes import Replicadores_parentesco
-import numpy as np
+from sistema_de_agentes import Replicadores_emparentados
 from matplotlib import pyplot as plt
-from medidores import Media, Desvio_Estandar, Histo_Log, Histo_Lineal
-import os
+from medidores import Media, Histo_Log, Histo_Lineal
 
 def simulacion(N_total, mean_hijes, pasos = 10**5,
                q=0.1, lamda=1.0, u_adim=1e-2, a=1.0, dt=1e-3,
                k_list=range(1,8)):
-    """Simulación de un sistema de  N_total replicadores emparentados.
+    """Simulación de un sistema de N_total replicadores emparentados.
     
     Devuelve un diccionario con el tamaño del sistema, un histograma de los
     valores totales de recursos visitados, promedio temporal acumulado y
     fluctuaciones temporales.
     """
     
-    sistema = Replicadores_parentesco(
+    sistema = Replicadores_emparentados(
         N_total,
         mean_hijes,
         x0 = 1.0 / N_total / mean_hijes,
@@ -35,18 +33,21 @@ def simulacion(N_total, mean_hijes, pasos = 10**5,
 
     sistema.transitorio(pasos=10000)
     
+    # histograma para la media de recursos del sistema
     histo_media = Histo_Lineal(
         xmin = u_adim / sistema.n,
         xmax = 1.0 / sistema.n,
         nbins = 100
         )
+    
+    # histograma para los recursos de todos los agentes del sistema
     histo_recursos = Histo_Log(
         xmin = u_adim / sistema.n,
         xmax = 1.0 / sistema.n,
         nbins = 100
         )
     
-    # diccionario de histogramas por numero de vecinos
+    # diccionario de histogramas de recursos según el número de vecinos
     histo_vecinos = {i: Histo_Lineal(
         xmin = u_adim / sistema.n,
         xmax = 1.0 / sistema.n,
@@ -56,37 +57,47 @@ def simulacion(N_total, mean_hijes, pasos = 10**5,
     # diccionario con listas de nodos segun numero de vecinos (key)
     dict_vecinos = sistema.red.segregate_per_neighbours(k_list)
     
-    medias = [Media() for i in range(N_total)]
+    # lista con promedios acumulados de cada agente (se van a ir actualizando)
+    lista_medias = [Media() for i in range(N_total)]
  
     for i in range(pasos):
         sistema.step()
         if not i % 1000:
+            # agrego nuevo promedio al hsitograma
             mu = sistema.mean()
             histo_media.nuevo_dato(mu)
+            
+            # agrego datos de recursos de todo el sistema al histograma
             histo_recursos.nuevo_dato(sistema.x)
             for n, histo in list(
                     zip(dict_vecinos.keys(), dict_vecinos.values())):
                 histo_vecinos[n].nuevo_dato(sistema.x[dict_vecinos[n]])
             
-            for j, media in enumerate(medias):
+            # actualizo promedios individuales
+            for j, media in enumerate(lista_medias):
                 media.nuevo_dato(sistema.x[j])            
             
-            print(f"ETA: ----- {100.0 * i / pasos:.2f}%")
+            print(f"Completado: ----- {100.0 * i / pasos:.2f}%")
     
-    dict_resources={i: medias[i].get() for i in range(N_total)}
-    sistema.red.show(resources=dict_resources)
+
+    # diccionario con media acumulada de recursos de cada agente
+    dic_medias = {i: media.get() for i, media in enumerate(lista_medias)}
+    
+    # muestro la red de replicadores emparentados con sus recursos promedio
+    sistema.show_net(dic_medias)
 
     return {"N": sistema.n,
+            "mean_hijes": mean_hijes,
+            "a": a,
             "histo_media": histo_media,
             "histo_recursos": histo_recursos,
             "histos_vecinos": histo_vecinos,
-            "recursos_promedio": medias
+            "dic_medias": dic_medias
             }
 
 #%% Simulaciones
 #----------Parámetros de la red
-N_total = 50 #numero total de agentes
-
+N_total = 10 #numero total de agentes
 hijos_mean = 2
 #----------
 

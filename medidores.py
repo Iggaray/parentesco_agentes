@@ -1,38 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Fri Sep 10 18:32:08 2021
 
-@author: nacho
-"""
+# medidores.py
+
 import numpy as np
 from matplotlib import pyplot as plt
 from collections import Counter
 
-#medidores.py
-class Estadistico(object):
-    """Estadístico genérico que se alimenta de datos en serie"""
+class Media(object):
+    """Media acumulada que se alimenta de datos en serie, de a uno.
+    
+    Recuerda el número de datos que recibió."""
     
     def __init__(self, valor=0):
         self.valor = valor
         self.paso = 0
-        
-    def nuevo_dato(self, x):
-        self.paso += 1
-    
-    def reset(self, valor=0):
-        self.valor = valor
-        self.paso = 0
-        
-    def get(self):
-        pass
-
-class Media(Estadistico):
-    """Media acumulada que se alimenta de datos en serie, de a uno.
-    
-    Recuerda el número de datos que recibió."""
-    def __init__(self):
-        super().__init__(valor=0)
     
     def nuevo_dato(self, x):
         self.valor *= (self.paso)/(self.paso+1)
@@ -93,22 +75,34 @@ class Histograma(object):
         plt.plot(self.bins, self.cuentas.values(), linestyle='none', marker='.')
     
     def reset(self):
-        self.cuentas = Counter() #np.zeros(len(self.bins))
+        self.cuentas = Counter()
     
     def normalizado(self):
+        if self.paso == 0: # si todos los bines son nulos
+            return self.cuentas
+        
         return self.cuentas / self.cuentas.sum()
     
     def densidad(self):
         dx = self.bins[1:] - self.bins[:-1]
         return self.normalizado()[:-1] / dx
     
+    def bin_centers(self):
+        x = (self.bins[1:] + self.bins[:-1]) / 2
+        return x
+    
     def plot_densidad(self, scale='linear'):
         f = self.densidad()
-        x = (self.bins[:-1] + self.bins[1:]) / 2 #Centrado en los bines
+        x = self.bin_centers() # centrado en los bines
         if scale=='linear':
             plt.plot(x[f>0], f[f>0], ls='-', lw=1)
         if scale=='log':
             plt.loglog(x[f>0], f[f>0], ls='-', lw=1)
+    
+    def promedio(self):
+        x = (self.bins[1:] + self.bins[:-1]) / 2
+        probabilidad = self.normalizado()[:-1]
+        return (x * probabilidad).sum()
     
 class Histo_Lineal(Histograma):
     '''Histograma con bineo lineal

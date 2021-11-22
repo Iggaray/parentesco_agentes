@@ -2,8 +2,6 @@ from pyvis.network import Network
 import random as rd
 import numpy as np
 import networkx as nx
-import matplotlib.pyplot as plt
-
 
 def load_distr(filename, has_headers=True):
     '''
@@ -21,7 +19,7 @@ def load_distr(filename, has_headers=True):
     types=[int, float]
     with open(filename, 'rt') as rows:   
         if has_headers:
-            headers=next(rows)
+            next(rows)
             for line in rows:
                 line=line.split('\t')
                 n_p=['', '']
@@ -165,7 +163,8 @@ def create_F1(N, f_n, acum):
 
 
 def marriages_F1(N, p2c, c2p):
-    #make a list of all people in F1 and reverse the p2c  (make a dictionary of child: parent_couple)
+    # make a list of all people in F1 and reverse the p2c
+    # (make a dictionary of child: parent_couple)
     F1_population=[i for i in range(2*N)]
 
     #print('Length of population used for marriages=', len(F1_population))
@@ -227,16 +226,11 @@ def generate_network(N, f_n, acum):
     Output:
             Returns the graph of the population
             
-            
-
-    '''
-    
- 
-    
+    '''  
     
     #Creating the F1 generation
 
-    p2c,c2p, M=create_F1(N, f_n, acum)
+    p2c, c2p, M=create_F1(N, f_n, acum)
 
     del M
 
@@ -251,6 +245,8 @@ def generate_network(N, f_n, acum):
 
     while not sucess:
         x+=1
+        p2c, c2p, M=create_F1(N, f_n, acum)
+        del M
         sucess, spouses_dict, gender=marriages_F1(N,p2c, c2p)
         #print('Hizo falta volver a asignar matrimonios')
     

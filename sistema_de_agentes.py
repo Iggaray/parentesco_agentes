@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Sat Sep 11 14:03:15 2021
-
-@author: nacho
-"""
 
 from numpy.random import default_rng
 import numpy as np
 from kinship_network import Kinship_net
 
 class Sistema(object):
-    """Sistema de agentes con recursos"""
+    """Sistema general de agentes con recursos"""
     
     def __init__(self, n, x0, q, lamda, u, dt):
         self.n = n #numero de agentes

@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Sat Sep 11 14:37:14 2021
-
-@author: nacho
-"""
 
 from sistema_de_agentes import Replicadores_emparentados
 from matplotlib import pyplot as plt
@@ -15,9 +10,10 @@ def simulacion(N_total, mean_hijes, pasos = 10**5,
                k_list=range(1,8)):
     """Simulación de un sistema de N_total replicadores emparentados.
     
-    Devuelve un diccionario con el tamaño del sistema, un histograma de los
-    valores totales de recursos visitados, promedio temporal acumulado y
-    fluctuaciones temporales.
+    Devuelve un diccionario con el sistema, un histograma de la media del
+    sistema, un histograma con recursos visitados por todos los agentes, 
+    un histograma con los recursos segregados por número de vecinos, y
+    una lista con el promedio temporal acumulado de cada agente.
     """
     
     sistema = Replicadores_emparentados(
@@ -82,19 +78,22 @@ def simulacion(N_total, mean_hijes, pasos = 10**5,
 
     # diccionario con media acumulada de recursos de cada agente
     dic_medias = {i: media.get() for i, media in enumerate(lista_medias)}
-    
-    # muestro la red de replicadores emparentados con sus recursos promedio
-    sistema.show_net(dic_medias)
 
-    return {"N": sistema.n,
-            "mean_hijes": mean_hijes,
-            "a": a,
+    return {
+            "sistema": sistema,
             "histo_media": histo_media,
             "histo_recursos": histo_recursos,
             "histos_vecinos": histo_vecinos,
             "dic_medias": dic_medias
             }
 
+def media_vs_k(dic_medias):
+    """ Graficar promedio de los agentes en función de su numero de vecinos"""
+    for i in dic_medias:
+        plt.plot(i, dic_medias[i], color='blue', ls='none', marker='.')
+    plt.xlabel("Número de vecinos")
+    plt.ylabel("Promedio temporal de recursos")
+    
 #%% Simulaciones
 #----------Parámetros de la red
 N_total = 10 #numero total de agentes
@@ -102,35 +101,50 @@ hijos_mean = 2
 #----------
 
 ####  Simulation of the system
-dic = simulacion(N_total, hijos_mean, a=1)
+resultados = simulacion(N_total, hijos_mean, a=2, pasos=10**5)
 
 
-#Gather results
-histo_media = dic['histo_media']
-histo_recursos = dic['histo_recursos']
-
-histo_recursos.plot_densidad(scale='log')
-histo_media.plot_densidad(scale='log')
+#%% Gather results
+histo_promedio_global = resultados['histo_media']
+histo_recursos_individuales = resultados['histo_recursos']
+histos_vecinos = resultados["histos_vecinos"]
 
 
-# Visualization of net
 
+#%% Visualization of results
 
-#recursos = np.random.rand(20)
-#dic = {i: recursos[i] for i in range(0, 20)}
-#red = Kinship_net(20, 2)
-#red.show(dic)
+# muestro la red con recursos individuales proporcionales al tamaño del nodo
+resultados["sistema"].show_net(resultados["dic_medias"])
 
-
-### Visualization of resources
-
-
+# histograma de todos los agentes
 plt.figure()
-plt.legend(["Recursos", "Media"], loc='best')
+histo_recursos_individuales.plot_densidad(scale='log')
+plt.xlabel(r"$x_i$", fontsize=12)
+plt.ylabel("Densidad de probabilidad", fontsize=12)
+plt.tight_layout()
 
-for histo in dic["histos_vecinos"].values():
+# histograma para cada número de conexión
+plt.figure()
+for histo in resultados["histos_vecinos"].values():
     histo.plot_densidad(scale='log')
+plt.xlabel(r"$x_i$", fontsize=12)
+plt.ylabel("Densidad de probabilidad", fontsize=12)
+plt.legend([f"$k={i:d}$" for i in resultados["histos_vecinos"]], loc='best')
+plt.tight_layout()
 
-plt.legend([f"$k={i:d}$" for i in dic["histos_vecinos"]], loc='best')
+# histo_media.plot_densidad(scale='log') este capaz es mucha info
+
+# promedio de recursos en función del número de vecinos
+plt.figure()
+
+promedios = [histos_vecinos[k].promedio() 
+             for k in histos_vecinos if histos_vecinos[k].paso > 0]
+
+k = [k for k in histos_vecinos if histos_vecinos[k].paso > 0]
+
+plt.plot(k, promedios, marker='.', lw=1)
+plt.xlabel("Número de vecinos", fontsize=12)
+plt.ylabel("Riqueza promedio", fontsize=12)
+plt.tight_layout()
 
 plt.show()
